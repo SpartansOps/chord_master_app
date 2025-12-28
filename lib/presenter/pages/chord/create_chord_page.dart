@@ -119,7 +119,9 @@ class _CreateChordPageState extends State<CreateChordPage> {
               const SizedBox(height: 12),
               FilledButton(
                 onPressed: () async {
-                  if (!_formKey.currentState!.validate()) {
+                  final formState = _formKey.currentState;
+
+                  if (formState != null && !formState.validate()) {
                     return;
                   }
 
