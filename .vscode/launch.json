@@ -1,0 +1,38 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "chord_master_app (local_api)",
+            "request": "launch",
+            "type": "dart",
+            "args": [
+                "--dart-define=API_BASE_URL=http://localhost:3333",
+                "--web-port",
+                "8080"
+            ]
+        },
+        {
+            "name": "chord_master_app (production_api)",
+            "request": "launch",
+            "type": "dart",
+            "args": [
+                "--dart-define=API_BASE_URL=https://chord-master-api.onrender.com"
+            ]
+        },
+        {
+            "name": "chord_master_app (profile mode)",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "profile"
+        },
+        {
+            "name": "chord_master_app (release mode)",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "release"
+        }
+    ]
+}

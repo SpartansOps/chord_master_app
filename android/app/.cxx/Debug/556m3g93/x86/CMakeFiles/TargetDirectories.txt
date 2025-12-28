@@ -1,0 +1,2 @@
+/Users/pedro/Projects/chord_master/chord_master_app/android/app/.cxx/Debug/556m3g93/x86/CMakeFiles/rebuild_cache.dir
+/Users/pedro/Projects/chord_master/chord_master_app/android/app/.cxx/Debug/556m3g93/x86/CMakeFiles/edit_cache.dir
