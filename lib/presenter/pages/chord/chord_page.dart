@@ -59,6 +59,7 @@ class _ChordPageState extends State<ChordPage> {
               );
             }),
         floatingActionButton: FloatingActionButton.extended(
+          heroTag: "fontSize",
           onPressed: () => showBottomSheetOptions(context),
           label: const Icon(Icons.more_horiz),
         ),
@@ -76,39 +77,40 @@ class _ChordPageState extends State<ChordPage> {
         ),
       ),
       builder: (context) => StreamBuilder<double>(
-          initialData: _viewModel.defaultFontSize,
-          stream: _viewModel.fontSizeStream,
-          builder: (context, snapshot) {
-            return SizedBox(
-              height: 68,
-              child: Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Row(
-                      children: [
-                        const Text('Tamanho'),
-                        const Spacer(),
-                        IconButton(
-                          onPressed: _viewModel.decreaseFont,
-                          icon: const Icon(
-                            Icons.text_decrease,
-                            size: 20,
-                          ),
+        initialData: _viewModel.defaultFontSize,
+        stream: _viewModel.fontSizeStream,
+        builder: (context, snapshot) {
+          return SizedBox(
+            height: 68,
+            child: Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Row(
+                    children: [
+                      const Text('Tamanho'),
+                      const Spacer(),
+                      IconButton(
+                        onPressed: _viewModel.decreaseFont,
+                        icon: const Icon(
+                          Icons.text_decrease,
+                          size: 20,
                         ),
-                        Text(snapshot.data.toString()),
-                        IconButton(
-                          onPressed: _viewModel.increaseFont,
-                          icon: const Icon(Icons.text_increase),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
+                      ),
+                      Text(snapshot.data.toString()),
+                      IconButton(
+                        onPressed: _viewModel.increaseFont,
+                        icon: const Icon(Icons.text_increase),
+                      ),
+                    ],
+                  ),
+                ],
               ),
-            );
-          }),
+            ),
+          );
+        },
+      ),
     );
   }
 }

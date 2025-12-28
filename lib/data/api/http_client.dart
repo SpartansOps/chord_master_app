@@ -13,6 +13,12 @@ class CustomHttp {
         headers: headers, body: body, encoding: encoding);
   }
 
+  Future<http.Response> put(String endpoint,
+      {Map<String, String>? headers, Object? body, Encoding? encoding}) {
+    return http.put(Uri.parse(baseUrl + endpoint),
+        headers: headers, body: body, encoding: encoding);
+  }
+
   Future<http.Response> get(String endpoint, {Map<String, String>? headers}) {
     return http.get(Uri.parse(baseUrl + endpoint), headers: headers);
   }

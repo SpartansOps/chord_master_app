@@ -2,9 +2,6 @@ import 'package:chord_master_app/app/services/app_preferences.dart';
 import 'package:chord_master_app/data/api/http_client.dart';
 import 'package:chord_master_app/data/provider/chord_provider.dart';
 import 'package:chord_master_app/data/repository/chord_repository.dart';
-import 'package:chord_master_app/app/services/file_service.dart';
-import 'package:chord_master_app/app/services/path_provider.dart';
-import 'package:chord_master_app/app/services/permissions.dart';
 import 'package:chord_master_app/presenter/pages/chord/chord_viewmodel.dart';
 import 'package:chord_master_app/presenter/pages/home/home_viewmodel.dart';
 import 'package:chord_master_app/presenter/pages/settings/settings_viewmodel.dart';
@@ -23,12 +20,7 @@ Future<void> initAppModule() async {
       .registerLazySingleton<ChordProvider>(() => ChordProvider(instance()));
   instance.registerLazySingleton<ChordRepository>(
       () => ChordRepository(instance()));
-  instance
-      .registerLazySingleton<PermissionService>(() => PermissionServiceImpl());
-  instance.registerLazySingleton<PathProviderService>(
-      () => PathProviderServiceImpl());
-  instance
-      .registerLazySingleton<ServiceFile>(() => ServiceFileImpl(instance()));
+
   instance.registerLazySingleton<AppPreferences>(() => AppPreferences(prefs));
   initSettingsModule();
 }
@@ -39,8 +31,6 @@ void initHomeModule() {
       HomeViewModel(
         instance(),
         instance(),
-        instance(),
-        instance(),
       ),
     );
   }
@@ -48,7 +38,7 @@ void initHomeModule() {
 
 void initChordModule() {
   if (!GetIt.I.isRegistered<ChordViewModel>()) {
-    instance.registerFactory(() => ChordViewModel());
+    instance.registerSingleton(ChordViewModel(instance()));
   }
 }
 

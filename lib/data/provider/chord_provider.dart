@@ -12,6 +12,41 @@ class ChordProvider {
 
   ChordProvider(this._client);
 
+  Future<ChordData?> saveChord(ChordData chord) async {
+    int statusCode = -1;
+    try {
+      Response? response;
+
+      if (chord.id != null) {
+        response = await _client.put(ApiEndPoints.updateChord,
+            body: jsonEncode(chord.toJson()),
+            headers: {
+              "content-type": "application/json",
+            });
+
+        if (response.statusCode != HttpStatus.ok) {
+          throw throw ClientException(
+              ResponseApi.getMessage(response.statusCode));
+        }
+      } else {
+        response = await _client.post(ApiEndPoints.saveChord,
+            body: jsonEncode(chord.removeNulls()),
+            headers: {
+              "content-type": "application/json",
+            });
+
+        if (response.statusCode != HttpStatus.created) {
+          throw throw ClientException(
+              ResponseApi.getMessage(response.statusCode));
+        }
+      }
+
+      return ChordData.fromJson(jsonDecode(response.body));
+    } on ClientException {
+      throw throw ClientException(ResponseApi.getMessage(statusCode));
+    }
+  }
+
   Future<List<ChordData>> getAllChords() async {
     int statusCode = -1;
     try {

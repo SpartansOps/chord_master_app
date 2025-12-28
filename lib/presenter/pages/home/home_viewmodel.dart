@@ -3,12 +3,10 @@ import 'package:chord_master_app/app/services/app_preferences.dart';
 import 'package:chord_master_app/data/mapper/chord_mapper.dart';
 import 'package:chord_master_app/data/models/chord_data.dart';
 import 'package:chord_master_app/data/repository/chord_repository.dart';
-import 'package:chord_master_app/app/services/file_service.dart';
-import 'package:chord_master_app/app/services/permissions.dart';
 import 'package:chord_master_app/domain/chord.dart';
 import 'package:chord_master_app/presenter/base/base_viewmodel.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
-import 'package:dio/dio.dart';
+import 'package:http/http.dart';
 import 'package:rxdart/rxdart.dart';
 
 enum HomeEvent {
@@ -25,8 +23,6 @@ enum HomeEvent {
 
 class HomeViewModel extends BaseViewModel {
   final ChordRepository _repository;
-  final PermissionService permissionService;
-  final ServiceFile fileService;
   final AppPreferences _appPreferences;
 
   List<Chord> chords = [];
@@ -42,10 +38,14 @@ class HomeViewModel extends BaseViewModel {
 
   HomeViewModel(
     this._repository,
-    this.permissionService,
-    this.fileService,
     this._appPreferences,
   );
+
+  Future<void> refreshChords() async {
+    chords = _appPreferences.getDownloadListChords();
+    filteredChordList = chords;
+    _chordsController.sink.add(chords);
+  }
 
   Future<void> downloadChords({bool isDownload = false}) async {
     try {
@@ -73,8 +73,8 @@ class HomeViewModel extends BaseViewModel {
       _chordsController.sink.add(chords);
       setEventMessage = "Cifras carregadas com sucesso!";
       setEvent = HomeEvent.successDownload;
-    } on DioException catch (e) {
-      setEventMessage = e.message ?? "Não foi possível carregar as cifras";
+    } on ClientException catch (e) {
+      setEventMessage = e.message;
       setEvent = HomeEvent.errorDownloadChords;
     } catch (e) {
       setEventMessage =

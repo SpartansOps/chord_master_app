@@ -10,6 +10,9 @@ class CustomTextField extends StatelessWidget {
     this.contentPadding,
     this.onChanged,
     this.prefixIcon,
+    this.textInputType,
+    this.maxLines,
+    this.validator,
   });
 
   final TextEditingController? controller;
@@ -18,11 +21,14 @@ class CustomTextField extends StatelessWidget {
   final Widget? suffixIcon;
   final Widget? prefixIcon;
   final double? contentPadding;
+  final TextInputType? textInputType;
+  final int? maxLines;
   final void Function(String)? onChanged;
+  final String? Function(String?)? validator;
 
   @override
   Widget build(BuildContext context) {
-    return TextField(
+    return TextFormField(
       controller: controller,
       cursorHeight: 20.0,
       onChanged: onChanged,
@@ -35,6 +41,9 @@ class CustomTextField extends StatelessWidget {
         prefixIcon: prefixIcon,
         border: const OutlineInputBorder(),
       ),
+      maxLines: maxLines,
+      keyboardType: textInputType,
+      validator: validator,
     );
   }
 }

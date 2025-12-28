@@ -18,10 +18,17 @@ class ChordData {
     required this.chordName,
     this.chordIntro,
     required this.chordContent,
-    required this.sync,
+    this.sync,
     this.chordLink,
   });
 
-  factory ChordData.fromJson(Map<String, dynamic> data) => _$ChordDataFromJson(data);
+  factory ChordData.fromJson(Map<String, dynamic> data) =>
+      _$ChordDataFromJson(data);
   Map<String, dynamic> toJson() => _$ChordDataToJson(this);
+
+  Map<String, dynamic> removeNulls() {
+    return Map.fromEntries(
+      toJson().entries.where((entry) => entry.value != null),
+    );
+  }
 }

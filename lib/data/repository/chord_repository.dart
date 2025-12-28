@@ -8,8 +8,13 @@ class ChordRepository {
 
   ChordRepository(this._provider);
 
+  Future<Chord?> saveChord(ChordData chord) async {
+    ChordData? chordData = await _provider.saveChord(chord);
+    return chordData?.toDomain();
+  }
+
   Future<List<Chord>> getAllChords() async {
     List<ChordData> data = await _provider.getAllChords();
-    return data.map((e) => e.toDomain()).toList();    
+    return data.map((e) => e.toDomain()).toList();
   }
 }
