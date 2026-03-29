@@ -14,12 +14,6 @@ class ChordPage extends StatefulWidget {
 class _ChordPageState extends State<ChordPage> {
   final _viewModel = instance<ChordViewModel>();
 
-  @override
-  void dispose() {
-    _viewModel.dispose();
-    super.dispose();
-  }
-
   Chord get chord => widget.arguments as Chord;
 
   @override

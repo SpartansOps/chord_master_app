@@ -31,6 +31,11 @@ class HomeViewModel extends BaseViewModel {
       BehaviorSubject<List<Chord>>();
   Stream<List<Chord>> get chordsStream => _chordsController.stream;
 
+  final StreamController<List<Chord>> _unfilteredChordsController =
+      BehaviorSubject<List<Chord>>();
+  Stream<List<Chord>> get unfilteredChordsStream =>
+      _unfilteredChordsController.stream;
+
   List<Chord> chordsPref = [];
   final StreamController<List<Chord>> _chordListController =
       BehaviorSubject<List<Chord>>();
@@ -45,6 +50,8 @@ class HomeViewModel extends BaseViewModel {
     chords = _appPreferences.getDownloadListChords();
     filteredChordList = chords;
     _chordsController.sink.add(chords);
+    _unfilteredChordsController.sink.add(chords);
+    await getChordList();
   }
 
   Future<void> downloadChords({bool isDownload = false}) async {
@@ -71,6 +78,7 @@ class HomeViewModel extends BaseViewModel {
         return;
       }
       _chordsController.sink.add(chords);
+      _unfilteredChordsController.sink.add(chords);
       setEventMessage = "Cifras carregadas com sucesso!";
       setEvent = HomeEvent.successDownload;
     } on ClientException catch (e) {
@@ -95,6 +103,7 @@ class HomeViewModel extends BaseViewModel {
         chordLink: chord.chordLink,
       ).toJson(),
     );
+    await getChordList();
   }
 
   Future<void> getChordList() async {
@@ -106,6 +115,29 @@ class HomeViewModel extends BaseViewModel {
 
   Future<void> deleteChordOfList(Chord chord) async {
     chordsPref.remove(chord);
+    _chordListController.sink.add(chordsPref);
+    await _appPreferences.saveAsListOfMap(
+      chordsPref
+          .map((e) => ChordData(
+                id: e.id,
+                chordNumber: e.chordNumber,
+                chordName: e.chordName,
+                chordContent: e.chordContent,
+                sync: e.sync,
+                chordIntro: e.chordIntro,
+                chordLink: e.chordLink,
+              ).toJson())
+          .toList(),
+    );
+  }
+
+  Future<void> reorderChordList(int oldIndex, int newIndex) async {
+    if (oldIndex < newIndex) {
+      newIndex -= 1;
+    }
+    final Chord item = chordsPref.removeAt(oldIndex);
+    chordsPref.insert(newIndex, item);
+
     _chordListController.sink.add(chordsPref);
     await _appPreferences.saveAsListOfMap(
       chordsPref
@@ -145,6 +177,7 @@ class HomeViewModel extends BaseViewModel {
   @override
   void dispose() {
     _chordsController.close();
+    _unfilteredChordsController.close();
     _chordListController.close();
     super.dispose();
   }

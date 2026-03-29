@@ -1,11 +1,11 @@
 {
-    "name": "chord_master_app",
-    "short_name": "chord_master_app",
+    "name": "Chord Master",
+    "short_name": "Chord Master",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "background_color": "#6A00FF",
+    "theme_color": "#6A00FF",
+    "description": "Aplicativo para leitura de cifras da IEQ Timburi",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

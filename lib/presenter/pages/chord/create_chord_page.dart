@@ -125,6 +125,9 @@ class _CreateChordPageState extends State<CreateChordPage> {
                     return;
                   }
 
+                  // Unfocus keyboard before saving to clear focus tree context
+                  FocusScope.of(context).unfocus();
+
                   _viewModel.saveChord(
                     _ctrlChordNumber,
                     _ctrlChordName,
