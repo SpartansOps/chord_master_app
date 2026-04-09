@@ -131,7 +131,7 @@ class _MyHomePageState extends State<MyHomePage> {
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Text(
-                'v1.2.0',
+                'v1.2.1',
                 style: TextStyle(
                   fontSize: 12,
                   color: Theme.of(context).colorScheme.onPrimaryContainer,

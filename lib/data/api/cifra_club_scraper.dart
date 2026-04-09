@@ -8,7 +8,8 @@ class CifraClubScraper {
     try {
       String requestUrl = url;
       if (kIsWeb) {
-        requestUrl = 'https://corsproxy.io/?${Uri.encodeComponent(url)}';
+        // corsproxy.io blocks some domains like netlify. We use allorigins instead.
+        requestUrl = 'https://api.allorigins.win/raw?url=${Uri.encodeComponent(url)}';
       }
       final response = await http.get(Uri.parse(requestUrl));
 
