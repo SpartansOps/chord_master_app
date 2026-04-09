@@ -8,8 +8,8 @@ class CifraClubScraper {
     try {
       String requestUrl = url;
       if (kIsWeb) {
-        // corsproxy.io blocks some domains like netlify. We use allorigins instead.
-        requestUrl = 'https://api.allorigins.win/raw?url=${Uri.encodeComponent(url)}';
+        // allorigins timeouts/fails with CifraClub, codetabs is more reliable for raw HTML bypassing CORS
+        requestUrl = 'https://api.codetabs.com/v1/proxy/?quest=$url';
       }
       final response = await http.get(Uri.parse(requestUrl));
 
