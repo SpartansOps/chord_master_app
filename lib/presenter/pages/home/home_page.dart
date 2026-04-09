@@ -3,6 +3,7 @@ import 'package:chord_master_app/domain/chord.dart';
 import 'package:chord_master_app/presenter/pages/chord/chord_viewmodel.dart';
 import 'package:chord_master_app/presenter/pages/home/home_viewmodel.dart';
 import 'package:chord_master_app/presenter/pages/settings/settings_viewmodel.dart';
+import 'package:chord_master_app/presenter/pages/cifra_club/cifra_club_page.dart';
 import 'package:chord_master_app/presenter/resources/routes/routes_manager.dart';
 import 'package:chord_master_app/presenter/resources/widgets/custom_text_field.dart';
 import 'package:chord_master_app/presenter/resources/widgets/snack_bar.dart';
@@ -40,6 +41,16 @@ class _MyHomePageState extends State<MyHomePage> {
     }
 
     super.initState();
+  }
+
+  void _openCifraClub(BuildContext context) async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const CifraClubPage()),
+    );
+    if (result != null && result is Chord) {
+      _viewModel.addChordList(result);
+    }
   }
 
   Widget _buildStatCard(
@@ -120,7 +131,7 @@ class _MyHomePageState extends State<MyHomePage> {
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Text(
-                'v1.1.2',
+                'v1.2.0',
                 style: TextStyle(
                   fontSize: 12,
                   color: Theme.of(context).colorScheme.onPrimaryContainer,
@@ -302,11 +313,22 @@ class _MyHomePageState extends State<MyHomePage> {
                                   ];
                                 },
                               ),
-                              onTap: () => Navigator.pushNamed(
-                                context,
-                                Routes.chord,
-                                arguments: chord[index],
-                              ),
+                              onTap: () {
+                                if ((chord[index].chordLink ?? "").contains("cifraclub.com.br")) {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => CifraClubPage(initialChord: chord[index]),
+                                    ),
+                                  );
+                                } else {
+                                  Navigator.pushNamed(
+                                    context,
+                                    Routes.chord,
+                                    arguments: chord[index],
+                                  );
+                                }
+                              },
                             ),
                           );
                         },
@@ -324,6 +346,15 @@ class _MyHomePageState extends State<MyHomePage> {
         spacing: 8.0,
         mainAxisAlignment: MainAxisAlignment.end,
         children: [
+          FloatingActionButton.extended(
+            heroTag: "cifra",
+            backgroundColor: Colors.orange.shade700,
+            foregroundColor: Colors.white,
+            onPressed: () => _openCifraClub(context),
+            label: const Row(
+              children: [Text('Cifra Club'), SizedBox(width: 5), Icon(Icons.my_library_music)],
+            ),
+          ),
           FloatingActionButton(
             heroTag: "add",
             onPressed: () =>

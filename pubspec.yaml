@@ -43,6 +43,9 @@ dependencies:
   connectivity_plus: ^6.0.3
   url_launcher: ^6.3.2
   google_fonts: ^8.0.2
+  html: ^0.15.4
+  youtube_player_iframe: ^5.2.2
+
 
 dev_dependencies:
   flutter_test:

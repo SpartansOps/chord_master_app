@@ -4,6 +4,7 @@ import 'package:chord_master_app/presenter/pages/home/home_viewmodel.dart';
 import 'package:chord_master_app/presenter/resources/routes/routes_manager.dart';
 import 'package:chord_master_app/presenter/resources/widgets/snack_bar.dart';
 import 'package:flutter/material.dart';
+import 'package:chord_master_app/presenter/pages/cifra_club/cifra_club_page.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class ListChordPage extends StatefulWidget {
@@ -91,11 +92,22 @@ class _ListChordPageState extends State<ListChordPage> {
                             content: "Cifra removida da lista");
                       }
                     }),
-                onTap: () => Navigator.pushNamed(
-                  context,
-                  Routes.chord,
-                  arguments: chords[index],
-                ),
+                onTap: () {
+                  if ((chords[index].chordLink ?? "").contains("cifraclub.com.br")) {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => CifraClubPage(initialChord: chords[index]),
+                      ),
+                    );
+                  } else {
+                    Navigator.pushNamed(
+                      context,
+                      Routes.chord,
+                      arguments: chords[index],
+                    );
+                  }
+                },
               );
             },
           );
