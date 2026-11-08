@@ -1,21 +1,33 @@
 class Settings {
-  bool darkMode;
+  final bool darkMode;
+  final double readerFontSize;
+  final double readerMargin;
 
-  Settings({this.darkMode = false});
+  const Settings({
+    this.darkMode = true,
+    this.readerFontSize = 16,
+    this.readerMargin = 8,
+  });
 
   factory Settings.fromMap(Map<String, dynamic> map) {
     return Settings(
-      darkMode: map['darkMode'],
+      darkMode: map['darkMode'] as bool? ?? true,
+      readerFontSize: (map['readerFontSize'] as num?)?.toDouble() ?? 16,
+      readerMargin: (map['readerMargin'] as num?)?.toDouble() ?? 8,
     );
   }
 
-  factory Settings.empty() {
-    return Settings(darkMode: false);
+  Settings copyWith({bool? darkMode, double? readerFontSize, double? readerMargin}) {
+    return Settings(
+      darkMode: darkMode ?? this.darkMode,
+      readerFontSize: readerFontSize ?? this.readerFontSize,
+      readerMargin: readerMargin ?? this.readerMargin,
+    );
   }
 
-  Map<String, dynamic> toMap() {
-    Map<String, dynamic> data = <String, dynamic>{};
-    data['darkMode'] = darkMode;
-    return data;
-  }
+  Map<String, dynamic> toMap() => {
+        'darkMode': darkMode,
+        'readerFontSize': readerFontSize,
+        'readerMargin': readerMargin,
+      };
 }

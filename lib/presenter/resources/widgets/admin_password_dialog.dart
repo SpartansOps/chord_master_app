@@ -1,29 +1,26 @@
-import 'package:chord_master_app/app/di.dart';
-import 'package:chord_master_app/app/services/admin_auth.dart';
+import 'package:chord_master_app/app/providers.dart';
+import 'package:chord_master_app/presenter/design_system/design_system.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// Retorna true se o usuário já é admin ou digitou a senha correta.
 /// Senha errada é tratada dentro do diálogo; cancelar apenas retorna false.
 Future<bool> ensureAdmin(BuildContext context) async {
-  final auth = instance<AdminAuth>();
+  final auth = ProviderScope.containerOf(context, listen: false).read(adminAuthProvider);
   if (auth.isAdmin) return true;
 
-  return await showDialog<bool>(
-        context: context,
-        builder: (_) => const _AdminPasswordDialog(),
-      ) ??
-      false;
+  return await showAppDialog<bool>(context, builder: (_) => const _AdminPasswordForm()) ?? false;
 }
 
-class _AdminPasswordDialog extends StatefulWidget {
-  const _AdminPasswordDialog();
+class _AdminPasswordForm extends ConsumerStatefulWidget {
+  const _AdminPasswordForm();
 
   @override
-  State<_AdminPasswordDialog> createState() => _AdminPasswordDialogState();
+  ConsumerState<_AdminPasswordForm> createState() => _AdminPasswordFormState();
 }
 
-class _AdminPasswordDialogState extends State<_AdminPasswordDialog> {
-  final TextEditingController _ctrlPassword = TextEditingController();
+class _AdminPasswordFormState extends ConsumerState<_AdminPasswordForm> {
+  final _ctrlPassword = TextEditingController();
   bool _obscure = true;
   String? _error;
 
@@ -34,40 +31,58 @@ class _AdminPasswordDialogState extends State<_AdminPasswordDialog> {
   }
 
   void _submit() {
-    if (instance<AdminAuth>().login(_ctrlPassword.text)) {
+    if (ref.read(adminAuthProvider).login(_ctrlPassword.text)) {
       Navigator.pop(context, true);
     } else {
-      setState(() => _error = "Senha incorreta");
+      setState(() => _error = 'Senha incorreta');
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
-      icon: const Icon(Icons.lock_outline),
-      title: const Text("Acesso de administrador"),
-      content: TextField(
-        controller: _ctrlPassword,
-        autofocus: true,
-        obscureText: _obscure,
-        onSubmitted: (_) => _submit(),
-        decoration: InputDecoration(
-          labelText: "Senha admin",
+    final c = context.colors;
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          width: 44,
+          height: 44,
+          decoration: BoxDecoration(color: c.accentSoft, borderRadius: BorderRadius.circular(AppRadius.md)),
+          child: Icon(AppIcons.lock, color: c.accent, size: 22),
+        ),
+        const SizedBox(height: AppSpace.md),
+        Text('Acesso de administrador', style: context.text.title),
+        const SizedBox(height: AppSpace.xxs),
+        Text('Criar e editar cifras exige a senha admin.', style: context.text.bodyMuted),
+        const SizedBox(height: AppSpace.lg),
+        AppTextField(
+          controller: _ctrlPassword,
+          hint: 'Senha',
+          autofocus: true,
+          obscureText: _obscure,
           errorText: _error,
-          suffixIcon: IconButton(
-            icon: Icon(_obscure ? Icons.visibility : Icons.visibility_off),
+          onSubmitted: (_) => _submit(),
+          suffix: AppIconButton(
+            icon: _obscure ? AppIcons.show : AppIcons.hide,
+            tooltip: _obscure ? 'Mostrar senha' : 'Esconder senha',
+            color: c.textMuted,
             onPressed: () => setState(() => _obscure = !_obscure),
           ),
         ),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context, false),
-          child: const Text("Cancelar"),
-        ),
-        FilledButton(
-          onPressed: _submit,
-          child: const Text("Entrar"),
+        const SizedBox(height: AppSpace.lg),
+        Row(
+          children: [
+            Expanded(
+              child: AppButton.secondary(
+                label: 'Cancelar',
+                expand: true,
+                onPressed: () => Navigator.pop(context, false),
+              ),
+            ),
+            const SizedBox(width: AppSpace.sm),
+            Expanded(child: AppButton(label: 'Entrar', expand: true, onPressed: _submit)),
+          ],
         ),
       ],
     );

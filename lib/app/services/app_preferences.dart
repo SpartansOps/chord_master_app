@@ -6,81 +6,61 @@ import 'package:chord_master_app/domain/chord.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class PrefKeys {
-  static const String prefChordList = 'prefChordList';
-  static const String prefDownloadList = 'prefDownloadList';
-  static const String prefSettings = 'prefSettings';
+  // Mantidas iguais às versões anteriores para não perder dados salvos.
+  static const String setlist = 'prefChordList';
+  static const String library = 'prefDownloadList';
+  static const String settings = 'prefSettings';
+  static const String draft = 'prefChordDraft';
 }
 
+/// Armazenamento local (localStorage na web).
 class AppPreferences {
-  final SharedPreferences _sharedPreferences;
+  final SharedPreferences _prefs;
 
-  AppPreferences(this._sharedPreferences);
+  AppPreferences(this._prefs);
 
-  Future<void> saveOneAsListOfMap(Map<String, dynamic> value) async {
-    List<String> list =
-        _sharedPreferences.getStringList(PrefKeys.prefChordList) ?? [];
-    list.add(jsonEncode(value));
-    await _sharedPreferences.setStringList(PrefKeys.prefChordList, list);
-  }
+  // Biblioteca (cifras baixadas da API)
+  List<Chord> getLibrary() => _readChords(PrefKeys.library);
 
-  Future<void> saveAsListOfMap(List<Map<String, dynamic>> values) async {
-    List<String> list = [];
-    for (var map in values) {
-      list.add(jsonEncode(map));
-    }
-    await _sharedPreferences.setStringList(PrefKeys.prefChordList, list);
-  }
-
-  Future<List<Map<String, dynamic>>> getAsListOfMap() async {
-    List<String> list =
-        _sharedPreferences.getStringList(PrefKeys.prefChordList) ?? [];
-    List<Map<String, dynamic>> listOfMap = [];
-    for (String s in list) {
-      listOfMap.add(jsonDecode(s));
-    }
-    return listOfMap;
-  }
-
-  Future<void> saveDownloadListChords(List<Chord> values) async {
-    List<String> list = [];
-    for (var map in values) {
-      list.add(
-        jsonEncode(
-          ChordData(
-            id: map.id,
-            chordNumber: map.chordNumber,
-            chordName: map.chordName,
-            chordContent: map.chordContent,
-            sync: false,
-            chordIntro: map.chordIntro,
-            chordLink: map.chordLink,
-          ).toJson(),
-        ),
+  Future<void> saveLibrary(List<Chord> chords) => _writeChords(
+        PrefKeys.library,
+        chords.map((c) => c.copyWith(sync: false)).toList(),
       );
-    }
-    await _sharedPreferences.setStringList(PrefKeys.prefDownloadList, list);
+
+  // Repertório (lista do culto)
+  List<Chord> getSetlist() => _readChords(PrefKeys.setlist);
+
+  Future<void> saveSetlist(List<Chord> chords) => _writeChords(PrefKeys.setlist, chords);
+
+  // Configurações
+  Map<String, dynamic> getSettings() {
+    final raw = _prefs.getString(PrefKeys.settings);
+    if (raw == null) return {};
+    return jsonDecode(raw) as Map<String, dynamic>;
   }
 
-  List<Chord> getDownloadListChords() {
-    List<String> list =
-        _sharedPreferences.getStringList(PrefKeys.prefDownloadList) ?? [];
-    List<ChordData> listChord = [];
-    for (String s in list) {
-      listChord.add(ChordData.fromJson(jsonDecode(s)));
-    }
-    return listChord.map((e) => e.toDomain()).toList();
+  Future<void> saveSettings(Map<String, dynamic> value) =>
+      _prefs.setString(PrefKeys.settings, jsonEncode(value));
+
+  // Rascunho da cifra nova
+  Chord? getDraft() {
+    final raw = _prefs.getString(PrefKeys.draft);
+    if (raw == null) return null;
+    return ChordData.fromJson(jsonDecode(raw)).toDomain();
   }
 
-  Future<void> saveAsMap(Map<String, dynamic> value) async {
-    await _sharedPreferences.setString(
-        PrefKeys.prefSettings, jsonEncode(value));
+  Future<void> saveDraft(Chord chord) =>
+      _prefs.setString(PrefKeys.draft, jsonEncode(chord.toData().toJson()));
+
+  Future<void> clearDraft() => _prefs.remove(PrefKeys.draft);
+
+  List<Chord> _readChords(String key) {
+    final list = _prefs.getStringList(key) ?? [];
+    return list.map((s) => ChordData.fromJson(jsonDecode(s)).toDomain()).toList();
   }
 
-  Future<Map<String, dynamic>> getAsMap() async {
-    String? map = _sharedPreferences.getString(PrefKeys.prefSettings);
-    if (map != null) {
-      return jsonDecode(map);
-    }
-    return {};
-  }
+  Future<void> _writeChords(String key, List<Chord> chords) => _prefs.setStringList(
+        key,
+        chords.map((c) => jsonEncode(c.toData().toJson())).toList(),
+      );
 }

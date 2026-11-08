@@ -14,3 +14,17 @@ extension ChordDataMapper on ChordData {
     );
   }
 }
+
+extension ChordToData on Chord {
+  ChordData toData() {
+    return ChordData(
+      id: id,
+      chordNumber: chordNumber,
+      chordName: chordName,
+      chordContent: chordContent,
+      sync: sync,
+      chordIntro: chordIntro,
+      chordLink: chordLink,
+    );
+  }
+}

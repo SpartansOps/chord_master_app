@@ -1,25 +1,25 @@
-import 'package:chord_master_app/app/di.dart';
-import 'package:chord_master_app/domain/settings.dart';
-import 'package:chord_master_app/presenter/pages/settings/settings_viewmodel.dart';
-import 'package:chord_master_app/presenter/resources/routes/routes_manager.dart';
-import 'package:chord_master_app/presenter/resources/theme/app_theme.dart';
+import 'package:chord_master_app/presenter/design_system/app_theme.dart';
+import 'package:chord_master_app/presenter/resources/routes/app_router.dart';
+import 'package:chord_master_app/presenter/state/settings_state.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+class ChordMasterApp extends ConsumerWidget {
+  const ChordMasterApp({super.key});
+
+  static final _light = buildAppTheme(Brightness.light);
+  static final _dark = buildAppTheme(Brightness.dark);
 
   @override
-  Widget build(BuildContext context) {
-    return StreamBuilder(
-      stream: instance<SettingsViewModel>().settingsStream,
-      builder: (context, snapshot) {
-        return MaterialApp(
-          title: 'Chord Master',
-          theme: getApplicationTheme(snapshot.data ?? Settings.empty()),
-          initialRoute: Routes.home,
-          onGenerateRoute: RouteManager.getRoute,
-        );
-      },
+  Widget build(BuildContext context, WidgetRef ref) {
+    final darkMode = ref.watch(settingsProvider.select((s) => s.darkMode));
+    return MaterialApp.router(
+      title: 'Chord Master',
+      debugShowCheckedModeBanner: false,
+      theme: _light,
+      darkTheme: _dark,
+      themeMode: darkMode ? ThemeMode.dark : ThemeMode.light,
+      routerConfig: appRouter,
     );
   }
 }

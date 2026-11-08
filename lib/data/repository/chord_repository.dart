@@ -1,20 +1,19 @@
+import 'package:chord_master_app/data/api/chord_api.dart';
 import 'package:chord_master_app/data/mapper/chord_mapper.dart';
-import 'package:chord_master_app/data/models/chord_data.dart';
-import 'package:chord_master_app/data/provider/chord_provider.dart';
 import 'package:chord_master_app/domain/chord.dart';
 
 class ChordRepository {
-  final ChordProvider _provider;
+  final ChordApi _api;
 
-  ChordRepository(this._provider);
+  ChordRepository(this._api);
 
-  Future<Chord?> saveChord(ChordData chord) async {
-    ChordData? chordData = await _provider.saveChord(chord);
-    return chordData?.toDomain();
+  Future<Chord?> saveChord(Chord chord) async {
+    final data = await _api.saveChord(chord.toData());
+    return data?.toDomain();
   }
 
   Future<List<Chord>> getAllChords() async {
-    List<ChordData> data = await _provider.getAllChords();
+    final data = await _api.getAllChords();
     return data.map((e) => e.toDomain()).toList();
   }
 }

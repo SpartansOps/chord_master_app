@@ -1,126 +1,133 @@
+import 'package:chord_master_app/domain/utils/chord_markup.dart';
+import 'package:chord_master_app/presenter/design_system/tokens.dart';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
+/// Renderiza o conteúdo de uma cifra.
+///
+/// IMPORTANTE: as fontes da cifra são fixas e não seguem o tema do app:
+/// - cifras do app: Roboto (fonte padrão original);
+/// - cifras do Cifra Club: Roboto Mono.
+/// Só as cores vêm do design system.
 class ChordContentViewer extends StatelessWidget {
-  final String? intro;
-  final String? content;
-  final double fontSize;
-
   const ChordContentViewer({
     super.key,
     this.intro,
     this.content,
     required this.fontSize,
+    this.cifraClub = false,
   });
+
+  final String? intro;
+  final String? content;
+  final double fontSize;
+
+  /// Conteúdo em HTML do Cifra Club (acordes em `<b>`).
+  final bool cifraClub;
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    final chordColor = isDark ? const Color(0xFF7C9CC4) : theme.colorScheme.primary;
+    final c = context.colors;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        if (intro != null && intro!.isNotEmpty) ...[
-          Text(
-            'INTRO',
-            style: TextStyle(
-              fontSize: fontSize * 0.75,
-              fontWeight: FontWeight.bold,
-              color: chordColor,
-              letterSpacing: 1.2,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            intro!,
-            style: TextStyle(
-              fontSize: fontSize,
-              fontWeight: FontWeight.w600,
-              color: chordColor,
-              height: 1.8,
-            ),
-          ),
-          const SizedBox(height: 16),
-        ],
-        if (content != null && content!.isNotEmpty)
-          _buildFormattedContent(context, content!, fontSize, chordColor),
-      ],
-    );
-  }
-
-  Widget _buildFormattedContent(
-    BuildContext context,
-    String text,
-    double fontSize,
-    Color chordColor,
-  ) {
-    final lines = text.split('\n');
-    final theme = Theme.of(context);
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: lines.map((line) {
-        if (line.trim().isEmpty) {
-          return SizedBox(height: fontSize * 0.8);
-        }
-
-        final isChordLine = _isChordLine(line);
-
-        if (isChordLine) {
-          return Padding(
-            padding: const EdgeInsets.only(bottom: 2),
-            child: Text(
-              line,
-              style: TextStyle(
-                fontSize: fontSize,
-                color: chordColor,
-                height: 1.6,
-              ),
-            ),
-          );
-        }
-
-        return Padding(
-          padding: const EdgeInsets.only(bottom: 2),
-          child: Text(
-            line,
-            style: TextStyle(
-              fontSize: fontSize,
-              color: theme.colorScheme.onSurface,
-              height: 1.6,
-            ),
-          ),
-        );
-      }).toList(),
-    );
-  }
-
-  bool _isChordLine(String line) {
-    final trimmed = line.trim();
-    if (trimmed.isEmpty) return false;
-
-    final tokens = trimmed.split(RegExp(r'\s+'));
-    if (tokens.isEmpty) return false;
-
-    final chordRegex = RegExp(
-      r'^[A-G][#b]?(m|min|maj|M|dim|aug|sus|add|maj7|min7|m7|7|9|11|13|maj9|min9|m9|dim7|aug7|sus2|sus4|m7b5|maj7#5|add9|add11|add13)?(\/[A-G][#b]?)?$',
-    );
-
-    int chordCount = 0;
-    int nonEmptyCount = 0;
-
-    for (final token in tokens) {
-      if (token.isEmpty) continue;
-      nonEmptyCount++;
-
-      final cleanToken = token.replaceAll(RegExp(r'^[(),]+|[(),]+$'), '');
-      if (chordRegex.hasMatch(cleanToken)) {
-        chordCount++;
-      }
+    if (cifraClub) {
+      final text = content ?? '';
+      // Cifra importada e editada no app vira texto puro, mas continua
+      // no visual do Cifra Club (Roboto Mono), com as linhas de acorde destacadas.
+      final spans = ChordMarkup.isHtml(text)
+          ? _cifraClubSpans(text, c)
+          : _cifraClubPlainSpans(text, c);
+      return SelectionArea(child: Text.rich(TextSpan(children: spans)));
     }
 
-    if (nonEmptyCount == 0) return false;
-    return chordCount > 0 && chordCount >= nonEmptyCount * 0.5;
+    return SelectionArea(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (intro != null && intro!.isNotEmpty) ...[
+            Text(
+              'INTRO',
+              style: GoogleFonts.roboto(
+                fontSize: fontSize * 0.75,
+                fontWeight: FontWeight.bold,
+                color: c.chord,
+                letterSpacing: 1.2,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              intro!,
+              style: GoogleFonts.roboto(
+                fontSize: fontSize,
+                fontWeight: FontWeight.w600,
+                color: c.chord,
+                height: 1.8,
+              ),
+            ),
+            const SizedBox(height: 16),
+          ],
+          if (content != null && content!.isNotEmpty) ..._plainLines(content!, c),
+        ],
+      ),
+    );
+  }
+
+  List<Widget> _plainLines(String text, AppColors c) {
+    return text.split('\n').map((line) {
+      if (line.trim().isEmpty) return SizedBox(height: fontSize * 0.8);
+      final isChord = ChordMarkup.isChordLine(line);
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 2),
+        child: Text(
+          line,
+          style: GoogleFonts.roboto(
+            fontSize: fontSize,
+            color: isChord ? c.chord : c.text,
+            height: 1.6,
+          ),
+        ),
+      );
+    }).toList();
+  }
+
+  List<TextSpan> _cifraClubPlainSpans(String text, AppColors c) {
+    final defaultStyle = GoogleFonts.robotoMono(fontSize: fontSize, color: c.text, height: 1.5);
+    final chordStyle = defaultStyle.copyWith(color: c.chord, fontWeight: FontWeight.bold);
+    final lines = text.split('\n');
+    return [
+      for (var i = 0; i < lines.length; i++)
+        TextSpan(
+          text: i < lines.length - 1 ? '${lines[i]}\n' : lines[i],
+          style: ChordMarkup.isChordLine(lines[i]) ? chordStyle : defaultStyle,
+        ),
+    ];
+  }
+
+  List<TextSpan> _cifraClubSpans(String html, AppColors c) {
+    if (html.isEmpty) return [];
+    final normalized = ChordMarkup.normalizeCifraClubHtml(html)
+        .replaceAll('‹', '<')
+        .replaceAll('›', '>');
+
+    final defaultStyle = GoogleFonts.robotoMono(fontSize: fontSize, color: c.text, height: 1.5);
+    final chordStyle = GoogleFonts.robotoMono(
+      fontSize: fontSize,
+      color: c.chord,
+      fontWeight: FontWeight.bold,
+      height: 1.5,
+    );
+
+    final spans = <TextSpan>[];
+    var last = 0;
+    for (final match in RegExp(r'<b[^>]*>(.*?)</b>').allMatches(normalized)) {
+      if (match.start > last) {
+        spans.add(TextSpan(text: normalized.substring(last, match.start), style: defaultStyle));
+      }
+      spans.add(TextSpan(text: match.group(1), style: chordStyle));
+      last = match.end;
+    }
+    if (last < normalized.length) {
+      spans.add(TextSpan(text: normalized.substring(last), style: defaultStyle));
+    }
+    return spans;
   }
 }

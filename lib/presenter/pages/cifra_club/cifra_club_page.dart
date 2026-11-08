@@ -1,340 +1,239 @@
-import 'package:chord_master_app/data/api/cifra_club_scraper.dart';
+import 'package:chord_master_app/app/providers.dart';
 import 'package:chord_master_app/domain/chord.dart';
-import 'package:chord_master_app/domain/utils/chord_transposer.dart';
-import 'package:chord_master_app/presenter/resources/widgets/snack_bar.dart';
-import 'package:flutter/gestures.dart';
+import 'package:chord_master_app/domain/utils/chord_markup.dart';
+import 'package:chord_master_app/presenter/design_system/design_system.dart';
+import 'package:chord_master_app/presenter/pages/chord/reader_widgets.dart';
+import 'package:chord_master_app/presenter/resources/routes/app_router.dart';
+import 'package:chord_master_app/presenter/resources/widgets/admin_password_dialog.dart';
+import 'package:chord_master_app/presenter/resources/widgets/chord_content_viewer.dart';
+import 'package:chord_master_app/presenter/state/setlist_state.dart';
+import 'package:chord_master_app/presenter/state/settings_state.dart';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
-class CifraClubPage extends StatefulWidget {
-  final Chord? initialChord;
-  const CifraClubPage({super.key, this.initialChord});
+/// Busca uma cifra no Cifra Club para pôr no repertório ou salvar na biblioteca.
+class CifraClubPage extends ConsumerStatefulWidget {
+  const CifraClubPage({super.key});
 
   @override
-  State<CifraClubPage> createState() => _CifraClubPageState();
+  ConsumerState<CifraClubPage> createState() => _CifraClubPageState();
 }
 
-class _CifraClubPageState extends State<CifraClubPage> {
-  final scraper = CifraClubScraper();
+class _CifraClubPageState extends ConsumerState<CifraClubPage> {
+  final _artist = TextEditingController();
+  final _song = TextEditingController();
 
-  final TextEditingController artistController = TextEditingController();
-  final TextEditingController songController = TextEditingController();
-
-  bool isLoading = false;
-  Chord? fetchedChord;
-  String error = "";
-
-  double fontSize = 16.0;
-  int currentToneShift = 0;
-
-  final ScrollController _scrollController = ScrollController();
-
-  @override
-  void initState() {
-    super.initState();
-    if (widget.initialChord != null) {
-      fetchedChord = widget.initialChord;
-    }
-  }
+  bool _loading = false;
+  Chord? _fetched;
+  String? _error;
+  int _shift = 0;
 
   @override
   void dispose() {
-    artistController.dispose();
-    songController.dispose();
-    _scrollController.dispose();
+    _artist.dispose();
+    _song.dispose();
     super.dispose();
   }
 
-  void fetchChord() async {
-    final artist =
-        artistController.text.trim().toLowerCase().replaceAll(' ', '-');
-    final song = songController.text.trim().toLowerCase().replaceAll(' ', '-');
+  String _slug(String value) => value.trim().toLowerCase().replaceAll(RegExp(r'\s+'), '-');
 
-    if (artist.isEmpty || song.isEmpty) {
-      setState(() => error = "Preencha o Artista e a Música");
-      return;
+  Future<void> _fetch() async {
+    final artistInput = _artist.text.trim();
+    String url;
+    if (artistInput.contains('cifraclub.com.br')) {
+      // Aceita colar o link direto
+      url = artistInput.startsWith('http') ? artistInput : 'https://$artistInput';
+    } else {
+      final artist = _slug(artistInput);
+      final song = _slug(_song.text);
+      if (artist.isEmpty || song.isEmpty) {
+        setState(() => _error = 'Preencha o artista e a música.');
+        return;
+      }
+      url = 'https://www.cifraclub.com.br/$artist/$song/';
     }
 
+    FocusScope.of(context).unfocus();
     setState(() {
-      isLoading = true;
-      error = "";
-      currentToneShift = 0;
+      _loading = true;
+      _error = null;
+      _shift = 0;
     });
-
-    final url = "https://www.cifraclub.com.br/$artist/$song/";
-
     try {
-      final chord = await scraper.getChordFromUrl(url);
-      setState(() {
-        fetchedChord = chord;
-        isLoading = false;
-      });
-    } catch (e) {
-      setState(() {
-        error = "Letra não encontrada. Verifique o nome.";
-        isLoading = false;
-      });
+      final chord = await ref.read(cifraClubScraperProvider).getChordFromUrl(url);
+      if (mounted) setState(() => _fetched = chord);
+    } catch (_) {
+      if (mounted) setState(() => _error = 'Cifra não encontrada. Confira os nomes como aparecem no site.');
+    } finally {
+      if (mounted) setState(() => _loading = false);
     }
   }
 
-  void increaseTone() {
-    setState(() {
-      currentToneShift += 1;
-    });
-  }
-
-  void decreaseTone() {
-    setState(() {
-      currentToneShift -= 1;
-    });
-  }
-
-  void increaseFont() {
-    setState(() {
-      fontSize += 2.0;
-    });
-  }
-
-  void decreaseFont() {
-    setState(() {
-      if (fontSize > 8.0) {
-        fontSize -= 2.0;
-      }
-    });
-  }
-
-  void saveToTodayList() {
-    if (fetchedChord == null) return;
-
-    // Creates a copy with the transposed html applied
-    final chordToSave = fetchedChord!.copyWith(
-        chordContent: ChordTransposer.transposeHtml(
-            fetchedChord!.chordContent ?? "", currentToneShift));
-
-    showSnackBar(
+  void _addToSetlist() {
+    ref.read(setlistProvider.notifier).add(ChordMarkup.transpose(_fetched!, _shift));
+    showToast(
       context,
-      content: '${chordToSave.chordName} adicionada à lista!',
-      icon: Icons.check_circle_outline,
+      '${_fetched!.chordName} no repertório',
+      actionLabel: 'Ver',
+      onAction: () => context.go(AppRoutes.setlist),
     );
-    Navigator.pop(context, chordToSave);
   }
 
-  // Parse HTML format: "text <b>chord</b> text"
-  List<TextSpan> _buildHtmlTextSpans(
-      BuildContext context, String htmlContent, double size) {
-    if (htmlContent.isEmpty) return [];
-
-    // Cifra Club uses some HTML entities
-    htmlContent = htmlContent
-        .replaceAll('&nbsp;', ' ')
-        .replaceAll('&amp;', '&')
-        .replaceAll('&quot;', '"');
-
-    // Convert <br> to newlines just in case they use it instead of \n
-    htmlContent = htmlContent.replaceAll(
-        RegExp(r'<br\s*/?>', caseSensitive: false), '\n');
-
-    // Convert </div> to newlines before stripping tags
-    htmlContent = htmlContent.replaceAll(RegExp(r'</div>'), '\n');
-
-    // Strip all HTML tags EXCEPT <b> and </b>
-    htmlContent =
-        htmlContent.replaceAll(RegExp(r'</?(?!b\b)[a-zA-Z0-9]+[^>]*>'), '');
-
-    final regex = RegExp(r'<b[^>]*>(.*?)</b>');
-    final matches = regex.allMatches(htmlContent);
-
-    final defaultStyle = GoogleFonts.robotoMono(
-      fontSize: size,
-      color: Theme.of(context).colorScheme.onSurface,
-      height: 1.5,
+  Future<void> _saveToLibrary() async {
+    if (!await ensureAdmin(context) || !mounted) return;
+    final transposed = ChordMarkup.transpose(_fetched!, _shift);
+    context.push(
+      AppRoutes.newChord,
+      extra: Chord(
+        chordName: transposed.chordName,
+        chordLink: transposed.chordLink,
+        chordContent: ChordMarkup.toPlainText(transposed.chordContent ?? ''),
+        chordIntro: '',
+      ),
     );
-
-    final chordStyle = GoogleFonts.robotoMono(
-      fontSize: size,
-      color: Colors.orange.shade700,
-      fontWeight: FontWeight.bold,
-      height: 1.5,
-    );
-
-    List<TextSpan> spans = [];
-    int lastMatchEnd = 0;
-
-    for (final match in matches) {
-      if (match.start > lastMatchEnd) {
-        spans.add(TextSpan(
-          text: htmlContent.substring(lastMatchEnd, match.start),
-          style: defaultStyle,
-        ));
-      }
-      spans.add(TextSpan(
-        text: match.group(1),
-        style: chordStyle,
-      ));
-      lastMatchEnd = match.end;
-    }
-
-    if (lastMatchEnd < htmlContent.length) {
-      spans.add(TextSpan(
-        text: htmlContent.substring(lastMatchEnd),
-        style: defaultStyle,
-      ));
-    }
-
-    return spans;
   }
 
   @override
   Widget build(BuildContext context) {
-    String contentToDisplay = fetchedChord?.chordContent ?? "";
-    if (currentToneShift != 0 && contentToDisplay.isNotEmpty) {
-      contentToDisplay =
-          ChordTransposer.transposeHtml(contentToDisplay, currentToneShift);
-    }
+    final fontSize = ref.watch(settingsProvider.select((s) => s.readerFontSize));
+    final fetched = _fetched;
 
-    return Scaffold(
-      body: SafeArea(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              margin: const EdgeInsets.only(top: 12),
-              child: TextButton.icon(
-                onPressed: () => Navigator.pop(context),
-                label: const Text("Voltar"),
-                icon: const Icon(Icons.arrow_back),
-              ),
+    return AppPage(
+      maxWidth: 900,
+      topBar: AppTopBar(
+        showBack: true,
+        maxWidth: 900 + 2 * AppSpace.gutter,
+        title: 'Cifra Club',
+        subtitle: 'Busque uma cifra para usar no app',
+        actions: [
+          if (fetched != null)
+            AppIconButton(
+              icon: AppIcons.readerSettings,
+              tooltip: 'Ajustes de leitura',
+              onPressed: () => showReaderSettingsSheet(context),
             ),
-            if (widget.initialChord == null)
-              Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Row(
+        ],
+      ),
+      bottomBar: fetched == null
+          ? null
+          : ReaderBottomBar(
+              children: [
+                ToneControl(
+                  shift: _shift,
+                  originalRoot: ChordMarkup.firstChordRoot(fetched),
+                  onChanged: (v) => setState(() => _shift = v),
+                ),
+                const Spacer(),
+                AppIconButton(
+                  icon: AppIcons.save,
+                  tooltip: 'Salvar na biblioteca (admin)',
+                  variant: AppIconButtonVariant.soft,
+                  size: 40,
+                  onPressed: _saveToLibrary,
+                ),
+                const SizedBox(width: AppSpace.xs),
+                AppButton(
+                  label: 'Repertório',
+                  icon: AppIcons.addToSetlist,
+                  size: AppButtonSize.sm,
+                  onPressed: _addToSetlist,
+                ),
+              ],
+            ),
+      body: CustomScrollView(
+        slivers: [
+          SliverToBoxAdapter(child: _searchForm()),
+          if (fetched == null)
+            const SliverFillRemaining(
+              hasScrollBody: false,
+              child: EmptyState(
+                icon: AppIcons.search,
+                title: 'Busque uma cifra',
+                message: 'Digite o artista e a música como aparecem no site, ou cole o link no campo Artista.',
+              ),
+            )
+          else
+            SliverPadding(
+              padding: const EdgeInsets.only(top: AppSpace.lg, bottom: AppSpace.xxl),
+              sliver: SliverToBoxAdapter(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Expanded(
-                      child: TextField(
-                        controller: artistController,
-                        decoration: const InputDecoration(
-                            labelText: "Artista",
-                            isDense: true,
-                            border: OutlineInputBorder()),
-                      ),
+                    Text(fetched.chordName ?? 'Sem título', style: context.text.title),
+                    const SizedBox(height: AppSpace.md),
+                    ChordContentViewer(
+                      content: ChordMarkup.transposeContent(fetched.chordContent ?? '', _shift),
+                      fontSize: fontSize,
+                      cifraClub: true,
                     ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: TextField(
-                        controller: songController,
-                        decoration: const InputDecoration(
-                            labelText: "Música",
-                            isDense: true,
-                            border: OutlineInputBorder()),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    ElevatedButton(
-                      onPressed: isLoading ? null : fetchChord,
-                      child: isLoading
-                          ? const SizedBox(
-                              width: 16,
-                              height: 16,
-                              child: CircularProgressIndicator(strokeWidth: 2))
-                          : const Text("Buscar"),
-                    )
                   ],
                 ),
               ),
-            if (error.isNotEmpty)
-              Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Text(error,
-                    style:
-                        TextStyle(color: Theme.of(context).colorScheme.error)),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _searchForm() {
+    final c = context.colors;
+    final fields = [
+      AppTextField(
+        controller: _artist,
+        label: 'Artista',
+        hint: 'Ex.: Aline Barros',
+        textInputAction: TextInputAction.next,
+      ),
+      AppTextField(
+        controller: _song,
+        label: 'Música',
+        hint: 'Ex.: Ressuscita-me',
+        textInputAction: TextInputAction.search,
+        onSubmitted: (_) => _fetch(),
+      ),
+    ];
+
+    return Padding(
+      padding: const EdgeInsets.only(top: AppSpace.xxs),
+      child: AppCard(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            if (context.isWide)
+              Row(
+                children: [
+                  Expanded(child: fields[0]),
+                  const SizedBox(width: AppSpace.sm),
+                  Expanded(child: fields[1]),
+                ],
+              )
+            else ...[
+              fields[0],
+              const SizedBox(height: AppSpace.sm),
+              fields[1],
+            ],
+            if (_error != null) ...[
+              const SizedBox(height: AppSpace.sm),
+              Row(
+                children: [
+                  Icon(AppIcons.error, size: 18, color: c.danger),
+                  const SizedBox(width: AppSpace.xs),
+                  Expanded(child: Text(_error!, style: context.text.caption.copyWith(color: c.danger))),
+                ],
               ),
-            Expanded(
-                child: fetchedChord == null
-                    ? const Center(
-                        child: Text("Busque uma cifra para visualizar"))
-                    : Listener(
-                        onPointerSignal: (event) {
-                          if (event is PointerScrollEvent) {
-                            final newOffset =
-                                _scrollController.offset + event.scrollDelta.dy;
-                            _scrollController.animateTo(
-                              newOffset.clamp(
-                                  _scrollController.position.minScrollExtent,
-                                  _scrollController.position.maxScrollExtent),
-                              duration: const Duration(milliseconds: 50),
-                              curve: Curves.easeOut,
-                            );
-                          }
-                        },
-                        child: SingleChildScrollView(
-                          controller: _scrollController,
-                          padding: const EdgeInsets.all(16.0),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(fetchedChord!.chordName ?? "Sem Título",
-                                  style: GoogleFonts.roboto(
-                                    fontSize: fontSize + 6,
-                                    fontWeight: FontWeight.bold,
-                                  )),
-                              const SizedBox(height: 16),
-                              RichText(
-                                text: TextSpan(
-                                  children: _buildHtmlTextSpans(
-                                      context, contentToDisplay, fontSize),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      )),
+            ],
+            const SizedBox(height: AppSpace.md),
+            AppButton(
+              label: 'Buscar',
+              icon: AppIcons.search,
+              loading: _loading,
+              expand: true,
+              onPressed: _fetch,
+            ),
           ],
         ),
       ),
-      bottomNavigationBar: fetchedChord == null
-          ? null
-          : BottomAppBar(
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  Row(
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.remove),
-                        onPressed: decreaseTone,
-                      ),
-                      Text(
-                          'Tom\n${currentToneShift > 0 ? '+$currentToneShift' : currentToneShift}',
-                          textAlign: TextAlign.center),
-                      IconButton(
-                        icon: const Icon(Icons.add),
-                        onPressed: increaseTone,
-                      ),
-                    ],
-                  ),
-                  Row(
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.text_decrease),
-                        onPressed: decreaseFont,
-                      ),
-                      const Text('Tamanho'),
-                      IconButton(
-                        icon: const Icon(Icons.text_increase),
-                        onPressed: increaseFont,
-                      ),
-                    ],
-                  ),
-                  IconButton(
-                    tooltip: "Adicionar à Lista",
-                    icon: Icon(Icons.save_alt,
-                        color: Theme.of(context).colorScheme.primary),
-                    onPressed: saveToTodayList,
-                  )
-                ],
-              ),
-            ),
     );
   }
 }

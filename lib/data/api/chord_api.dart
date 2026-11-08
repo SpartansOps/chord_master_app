@@ -7,10 +7,10 @@ import 'package:chord_master_app/data/api/http_error.dart';
 import 'package:chord_master_app/data/models/chord_data.dart';
 import 'package:http/http.dart';
 
-class ChordProvider {
+class ChordApi {
   final CustomHttp _client;
 
-  ChordProvider(this._client);
+  ChordApi(this._client);
 
   static const _jsonHeaders = {"content-type": "application/json"};
 

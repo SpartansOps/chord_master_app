@@ -1,5 +1,5 @@
 name: chord_master_app
-description: "A new Flutter project."
+description: "Leitor de cifras para a equipe de louvor (PWA)."
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
@@ -16,7 +16,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
 # In Windows, build-name is used as the major, minor, and patch parts
 # of the product and file versions while build-number is used as the build suffix.
-version: 1.0.0+1
+version: 2.0.0+2
 
 environment:
   sdk: '>=3.2.3 <4.0.0'
@@ -30,14 +30,13 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-
+  flutter_web_plugins:
+    sdk: flutter
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.2
-  get_it: ^7.6.7
   json_annotation: ^4.8.1
-  rxdart: ^0.27.7
   shared_preferences: ^2.2.2
   http: ^1.2.0
   connectivity_plus: ^6.0.3
@@ -46,8 +45,9 @@ dependencies:
   html: ^0.15.4
   youtube_player_iframe: ^5.2.2
   crypto: ^3.0.8
-
-
+  flutter_riverpod: ^3.5.0
+  go_router: ^18.1.3
+  lucide_icons_flutter: ^4.0.2
 dev_dependencies:
   flutter_test:
     sdk: flutter
