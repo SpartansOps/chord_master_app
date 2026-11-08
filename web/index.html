@@ -18,11 +18,12 @@
 
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
-  <meta name="description" content="Chord Master">
+  <meta name="description" content="Cifras e repertório da equipe de louvor">
+  <meta name="theme-color" content="#110F0D">
 
   <!-- iOS meta tags & icons -->
   <meta name="mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Chord Master">
   <link rel="apple-touch-icon" href="icons/Icon-192.png">
 
@@ -31,8 +32,19 @@
 
   <title>Chord Master</title>
   <link rel="manifest" href="manifest.json">
+  <style>
+    html, body { margin: 0; height: 100%; background: #110F0D; }
+    /* Tela de carregamento: some quando o Flutter desenha o primeiro quadro */
+    #splash { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; }
+    #splash img { width: 88px; height: 88px; animation: pulse 1.4s ease-in-out infinite; }
+    @keyframes pulse { 0%, 100% { opacity: .55; transform: scale(.96); } 50% { opacity: 1; transform: scale(1); } }
+  </style>
 </head>
 <body>
+  <div id="splash"><img src="icons/Icon-192.png" alt="Chord Master"></div>
+  <script>
+    window.addEventListener('flutter-first-frame', () => document.getElementById('splash')?.remove());
+  </script>
   <script src="flutter_bootstrap.js" async></script>
 </body>
 </html>

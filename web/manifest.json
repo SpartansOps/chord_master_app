@@ -3,9 +3,9 @@
     "short_name": "Chord Master",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#6A00FF",
-    "theme_color": "#6A00FF",
-    "description": "Aplicativo para leitura de cifras da IEQ Timburi",
+    "background_color": "#110F0D",
+    "theme_color": "#110F0D",
+    "description": "Cifras e repertório da equipe de louvor da IEQ Timburi",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [
