@@ -2,7 +2,6 @@ import 'package:chord_master_app/app/di.dart';
 import 'package:chord_master_app/domain/chord.dart';
 import 'package:chord_master_app/presenter/pages/home/home_viewmodel.dart';
 import 'package:chord_master_app/presenter/resources/routes/routes_manager.dart';
-import 'package:chord_master_app/presenter/resources/widgets/admin_password_dialog.dart';
 import 'package:chord_master_app/presenter/resources/widgets/snack_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:chord_master_app/presenter/pages/cifra_club/cifra_club_page.dart';

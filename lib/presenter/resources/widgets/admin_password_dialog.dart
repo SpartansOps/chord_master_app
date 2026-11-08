@@ -1,24 +1,18 @@
 import 'package:chord_master_app/app/di.dart';
 import 'package:chord_master_app/app/services/admin_auth.dart';
-import 'package:chord_master_app/presenter/resources/widgets/snack_bar.dart';
 import 'package:flutter/material.dart';
 
 /// Retorna true se o usuário já é admin ou digitou a senha correta.
+/// Senha errada é tratada dentro do diálogo; cancelar apenas retorna false.
 Future<bool> ensureAdmin(BuildContext context) async {
   final auth = instance<AdminAuth>();
   if (auth.isAdmin) return true;
 
-  final success = await showDialog<bool>(
+  return await showDialog<bool>(
         context: context,
         builder: (_) => const _AdminPasswordDialog(),
       ) ??
       false;
-
-  if (!success && context.mounted) {
-    showSnackBar(context,
-        content: "Apenas o administrador pode fazer isso", isError: true);
-  }
-  return success;
 }
 
 class _AdminPasswordDialog extends StatefulWidget {

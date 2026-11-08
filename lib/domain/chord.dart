@@ -32,6 +32,7 @@ class Chord {
       chordName: chordName ?? this.chordName,
       chordIntro: chordIntro ?? this.chordIntro,
       chordContent: chordContent ?? this.chordContent,
+      sync: sync ?? this.sync,
       chordLink: chordLink ?? this.chordLink,
     );
   }

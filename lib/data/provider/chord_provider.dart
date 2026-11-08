@@ -12,66 +12,49 @@ class ChordProvider {
 
   ChordProvider(this._client);
 
+  static const _jsonHeaders = {"content-type": "application/json"};
+
   Future<ChordData?> saveChord(ChordData chord) async {
-    int statusCode = -1;
-    try {
-      Response? response;
+    final isUpdate = chord.id != null;
 
-      if (chord.id != null) {
-        response = await _client.put(ApiEndPoints.updateChord,
-            body: jsonEncode(chord.toJson()),
-            headers: {
-              "content-type": "application/json",
-            });
+    final response = await _send(() => isUpdate
+        ? _client.put(ApiEndPoints.updateChord,
+            body: jsonEncode(chord.toJson()), headers: _jsonHeaders)
+        : _client.post(ApiEndPoints.saveChord,
+            body: jsonEncode(chord.removeNulls()), headers: _jsonHeaders));
 
-        if (response.statusCode != HttpStatus.ok) {
-          throw throw ClientException(
-              ResponseApi.getMessage(response.statusCode));
-        }
-      } else {
-        response = await _client.post(ApiEndPoints.saveChord,
-            body: jsonEncode(chord.removeNulls()),
-            headers: {
-              "content-type": "application/json",
-            });
-
-        if (response.statusCode != HttpStatus.created) {
-          throw throw ClientException(
-              ResponseApi.getMessage(response.statusCode));
-        }
-      }
-
-      return ChordData.fromJson(jsonDecode(response.body));
-    } on ClientException {
-      throw throw ClientException(ResponseApi.getMessage(statusCode));
+    final expectedStatus = isUpdate ? HttpStatus.ok : HttpStatus.created;
+    if (response.statusCode != expectedStatus) {
+      throw ClientException(ResponseApi.getMessage(response.statusCode));
     }
+
+    return ChordData.fromJson(jsonDecode(response.body));
   }
 
   Future<List<ChordData>> getAllChords() async {
-    int statusCode = -1;
-    try {
-      final response = await _client.get(
-        ApiEndPoints.getAllChords,
-        headers: {
-          "content-type": "application/json",
-        },
-      );
+    final response = await _send(
+        () => _client.get(ApiEndPoints.getAllChords, headers: _jsonHeaders));
 
-      statusCode = response.statusCode;
-      if (response.statusCode != HttpStatus.ok) {
-        throw throw ClientException(
-            ResponseApi.getMessage(response.statusCode));
-      }
-      List<ChordData> chords = [];
-      for (var chord in jsonDecode(response.body)) {
-        chords.add(ChordData.fromJson(chord));
-      }
-      return chords;
-    } on ClientException {
-      throw ClientException(ResponseApi.getMessage(statusCode));
+    if (response.statusCode != HttpStatus.ok) {
+      throw ClientException(ResponseApi.getMessage(response.statusCode));
+    }
+
+    try {
+      return [
+        for (final chord in jsonDecode(response.body)) ChordData.fromJson(chord)
+      ];
     } catch (e) {
       log(e.toString());
       throw Exception(e);
+    }
+  }
+
+  /// Falha de rede (sem resposta do servidor) vira mensagem genérica amigável.
+  Future<Response> _send(Future<Response> Function() request) async {
+    try {
+      return await request();
+    } on ClientException {
+      throw ClientException(ResponseApi.getMessage(null));
     }
   }
 }
