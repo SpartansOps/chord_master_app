@@ -1,6 +1,8 @@
 import 'package:chord_master_app/data/api/cifra_club_scraper.dart';
 import 'package:chord_master_app/domain/chord.dart';
 import 'package:chord_master_app/domain/utils/chord_transposer.dart';
+import 'package:chord_master_app/presenter/resources/widgets/snack_bar.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -25,6 +27,8 @@ class _CifraClubPageState extends State<CifraClubPage> {
   double fontSize = 16.0;
   int currentToneShift = 0;
 
+  final ScrollController _scrollController = ScrollController();
+
   @override
   void initState() {
     super.initState();
@@ -37,6 +41,7 @@ class _CifraClubPageState extends State<CifraClubPage> {
   void dispose() {
     artistController.dispose();
     songController.dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 
@@ -106,10 +111,10 @@ class _CifraClubPageState extends State<CifraClubPage> {
         chordContent: ChordTransposer.transposeHtml(
             fetchedChord!.chordContent ?? "", currentToneShift));
 
-    // We navigate back returning the chord to be added by the previous screen
-    // or we can just pop it and handle it on home page.
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Acorde ${chordToSave.chordName} selecionado!')),
+    showSnackBar(
+      context,
+      content: '${chordToSave.chordName} adicionada à lista!',
+      icon: Icons.check_circle_outline,
     );
     Navigator.pop(context, chordToSave);
   }
@@ -129,11 +134,14 @@ class _CifraClubPageState extends State<CifraClubPage> {
     htmlContent = htmlContent.replaceAll(
         RegExp(r'<br\s*/?>', caseSensitive: false), '\n');
 
+    // Convert </div> to newlines before stripping tags
+    htmlContent = htmlContent.replaceAll(RegExp(r'</div>'), '\n');
+
     // Strip all HTML tags EXCEPT <b> and </b>
     htmlContent =
         htmlContent.replaceAll(RegExp(r'</?(?!b\b)[a-zA-Z0-9]+[^>]*>'), '');
 
-    final regex = RegExp(r'<b>(.*?)</b>');
+    final regex = RegExp(r'<b[^>]*>(.*?)</b>');
     final matches = regex.allMatches(htmlContent);
 
     final defaultStyle = GoogleFonts.robotoMono(
@@ -245,23 +253,40 @@ class _CifraClubPageState extends State<CifraClubPage> {
                 child: fetchedChord == null
                     ? const Center(
                         child: Text("Busque uma cifra para visualizar"))
-                    : SingleChildScrollView(
-                        padding: const EdgeInsets.all(16.0),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(fetchedChord!.chordName ?? "Sem Título",
-                                style: TextStyle(
+                    : Listener(
+                        onPointerSignal: (event) {
+                          if (event is PointerScrollEvent) {
+                            final newOffset =
+                                _scrollController.offset + event.scrollDelta.dy;
+                            _scrollController.animateTo(
+                              newOffset.clamp(
+                                  _scrollController.position.minScrollExtent,
+                                  _scrollController.position.maxScrollExtent),
+                              duration: const Duration(milliseconds: 50),
+                              curve: Curves.easeOut,
+                            );
+                          }
+                        },
+                        child: SingleChildScrollView(
+                          controller: _scrollController,
+                          padding: const EdgeInsets.all(16.0),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(fetchedChord!.chordName ?? "Sem Título",
+                                  style: GoogleFonts.roboto(
                                     fontSize: fontSize + 6,
-                                    fontWeight: FontWeight.bold)),
-                            const SizedBox(height: 16),
-                            RichText(
-                              text: TextSpan(
-                                children: _buildHtmlTextSpans(
-                                    context, contentToDisplay, fontSize),
+                                    fontWeight: FontWeight.bold,
+                                  )),
+                              const SizedBox(height: 16),
+                              RichText(
+                                text: TextSpan(
+                                  children: _buildHtmlTextSpans(
+                                      context, contentToDisplay, fontSize),
+                                ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                       )),
           ],

@@ -2,6 +2,7 @@ import 'package:chord_master_app/app/di.dart';
 import 'package:chord_master_app/domain/chord.dart';
 import 'package:chord_master_app/presenter/pages/home/home_viewmodel.dart';
 import 'package:chord_master_app/presenter/resources/routes/routes_manager.dart';
+import 'package:chord_master_app/presenter/resources/widgets/admin_password_dialog.dart';
 import 'package:chord_master_app/presenter/resources/widgets/snack_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:chord_master_app/presenter/pages/cifra_club/cifra_club_page.dart';
@@ -68,12 +69,16 @@ class _ListChordPageState extends State<ListChordPage> {
                         child: TextButton(
                           onPressed: () async {
                             final urlString = chords[index].chordLink!;
-                            final uri = Uri.parse(urlString.startsWith('http') ? urlString : 'https://$urlString');
+                            final uri = Uri.parse(urlString.startsWith('http')
+                                ? urlString
+                                : 'https://$urlString');
                             if (await canLaunchUrl(uri)) {
-                              await launchUrl(uri, mode: LaunchMode.externalApplication);
+                              await launchUrl(uri,
+                                  mode: LaunchMode.externalApplication);
                             } else {
                               if (context.mounted) {
-                                showSnackBar(context, content: "Não foi possível abrir o link");
+                                showSnackBar(context,
+                                    content: "Não foi possível abrir o link");
                               }
                             }
                           },
@@ -87,17 +92,19 @@ class _ListChordPageState extends State<ListChordPage> {
                     icon: const Icon(Icons.delete_outline_rounded),
                     onPressed: () async {
                       await _viewModel.deleteChordOfList(chords[index]);
-                      if (mounted) {
+                      if (context.mounted) {
                         showSnackBar(context,
                             content: "Cifra removida da lista");
                       }
                     }),
                 onTap: () {
-                  if ((chords[index].chordLink ?? "").contains("cifraclub.com.br")) {
+                  if ((chords[index].chordLink ?? "")
+                      .contains("cifraclub.com.br")) {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => CifraClubPage(initialChord: chords[index]),
+                        builder: (context) =>
+                            CifraClubPage(initialChord: chords[index]),
                       ),
                     );
                   } else {

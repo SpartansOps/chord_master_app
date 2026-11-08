@@ -1,3 +1,4 @@
+import 'package:chord_master_app/app/services/admin_auth.dart';
 import 'package:chord_master_app/app/services/app_preferences.dart';
 import 'package:chord_master_app/data/api/http_client.dart';
 import 'package:chord_master_app/data/provider/chord_provider.dart';
@@ -22,6 +23,7 @@ Future<void> initAppModule() async {
       () => ChordRepository(instance()));
 
   instance.registerLazySingleton<AppPreferences>(() => AppPreferences(prefs));
+  instance.registerLazySingleton<AdminAuth>(() => AdminAuth());
   initSettingsModule();
 }
 

@@ -45,6 +45,7 @@ dependencies:
   google_fonts: ^8.0.2
   html: ^0.15.4
   youtube_player_iframe: ^5.2.2
+  crypto: ^3.0.8
 
 
 dev_dependencies:

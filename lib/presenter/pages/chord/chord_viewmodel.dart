@@ -18,7 +18,14 @@ class ChordViewModel extends BaseViewModel {
   final StreamController<double> _fontSizecontroller = BehaviorSubject();
   Stream<double> get fontSizeStream => _fontSizecontroller.stream;
 
+  final StreamController<double> _marginController = BehaviorSubject();
+  Stream<double> get marginStream => _marginController.stream;
+
+  static const double _marginStep = 4.0;
+  static const double _maxMargin = 48.0;
+
   double defaultFontSize = 16.0;
+  double defaultMargin = 8.0;
   Chord chord = Chord.empty();
 
   final ChordRepository _repository;
@@ -92,5 +99,15 @@ class ChordViewModel extends BaseViewModel {
 
   void decreaseFont() {
     _fontSizecontroller.sink.add(defaultFontSize -= 0.5);
+  }
+
+  void increaseMargin() {
+    if (defaultMargin >= _maxMargin) return;
+    _marginController.sink.add(defaultMargin += _marginStep);
+  }
+
+  void decreaseMargin() {
+    if (defaultMargin <= 0) return;
+    _marginController.sink.add(defaultMargin -= _marginStep);
   }
 }

@@ -9,8 +9,8 @@ class ChordTransposer {
   static String transposeHtml(String html, int semitones) {
     if (semitones == 0) return html;
 
-    // Transpose only the contents inside <b> tags
-    final regex = RegExp(r'<b>(.*?)</b>');
+    // Transpose only the contents inside <b> tags (with or without attributes)
+    final regex = RegExp(r'<b[^>]*>(.*?)</b>');
     return html.replaceAllMapped(regex, (match) {
       final chordString = match.group(1) ?? '';
       final transposedChord = transposeChordString(chordString, semitones);

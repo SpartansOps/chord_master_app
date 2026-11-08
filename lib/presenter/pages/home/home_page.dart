@@ -5,11 +5,12 @@ import 'package:chord_master_app/presenter/pages/home/home_viewmodel.dart';
 import 'package:chord_master_app/presenter/pages/settings/settings_viewmodel.dart';
 import 'package:chord_master_app/presenter/pages/cifra_club/cifra_club_page.dart';
 import 'package:chord_master_app/presenter/resources/routes/routes_manager.dart';
+import 'package:chord_master_app/presenter/resources/widgets/admin_password_dialog.dart';
 import 'package:chord_master_app/presenter/resources/widgets/custom_text_field.dart';
 import 'package:chord_master_app/presenter/resources/widgets/snack_bar.dart';
+import 'package:chord_master_app/presenter/resources/widgets/speed_dial_fab.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 class MyHomePage extends StatefulWidget {
   const MyHomePage({super.key});
@@ -54,38 +55,57 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   Widget _buildStatCard(
-      BuildContext context, String title, Stream<List<Chord>> stream) {
+      BuildContext context, String title, IconData icon, Stream<List<Chord>> stream) {
     return Expanded(
-      child: Card(
-        elevation: 1,
-        shadowColor: Colors.black26,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: StreamBuilder<List<Chord>>(
-            stream: stream,
-            builder: (context, snapshot) {
-              final count = snapshot.data?.length ?? 0;
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: const TextStyle(
-                        fontWeight: FontWeight.bold, color: Colors.grey),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    count.toString(),
-                    style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: Theme.of(context).colorScheme.primary,
-                        ),
-                  ),
-                ],
-              );
-            },
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.surface,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: Theme.of(context).colorScheme.outlineVariant.withValues(alpha: 0.3),
           ),
+        ),
+        child: StreamBuilder<List<Chord>>(
+          stream: stream,
+          builder: (context, snapshot) {
+            final count = snapshot.data?.length ?? 0;
+            return Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.primaryContainer,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Icon(
+                    icon,
+                    size: 20,
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                    Text(
+                      count.toString(),
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                    ),
+                  ],
+                ),
+              ],
+            );
+          },
         ),
       ),
     );
@@ -99,45 +119,36 @@ class _MyHomePageState extends State<MyHomePage> {
         title: Row(
           children: [
             Container(
-              padding: const EdgeInsets.all(6),
+              padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
                 gradient: const LinearGradient(
-                  colors: [Color(0xFF6A00FF), Color(0xFF00C6FF)],
+                  colors: [Color(0xFF4A6FA5), Color(0xFF7C9CC4)],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
                 borderRadius: BorderRadius.circular(10),
-                boxShadow: const [
-                  BoxShadow(
-                    color: Colors.black26,
-                    blurRadius: 4,
-                    offset: Offset(0, 2),
-                  ),
-                ],
               ),
-              child:
-                  const Icon(Icons.music_note, color: Colors.white, size: 22),
+              child: const Icon(Icons.music_note, color: Colors.white, size: 20),
             ),
             const SizedBox(width: 10),
-            const Text(
-              'Chord Master',
-              style: TextStyle(fontWeight: FontWeight.w800),
-            ),
-            const SizedBox(width: 8),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.primaryContainer,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Text(
-                'v1.2.1',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Theme.of(context).colorScheme.onPrimaryContainer,
-                  fontWeight: FontWeight.bold,
+            const Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Chord Master',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w800,
+                    fontSize: 18,
+                  ),
                 ),
-              ),
+                Text(
+                  'v1.2.1',
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
             ),
           ],
         ),
@@ -156,20 +167,27 @@ class _MyHomePageState extends State<MyHomePage> {
           ),
           PopupMenuButton(
             position: PopupMenuPosition.under,
+            icon: const Icon(Icons.more_vert),
             itemBuilder: (context) {
               return [
                 PopupMenuItem(
                   onTap: () => _viewModel.downloadChords(isDownload: true),
                   child: const Row(
-                    spacing: 8.0,
-                    children: [Icon(Icons.cloud_download), Text("Atualizar")],
+                    children: [
+                      Icon(Icons.cloud_download, size: 20),
+                      SizedBox(width: 8),
+                      Text("Atualizar"),
+                    ],
                   ),
                 ),
                 PopupMenuItem(
                   onTap: () => _viewModel.refreshChords(),
                   child: const Row(
-                    spacing: 8.0,
-                    children: [Icon(Icons.refresh), Text("Recarregar")],
+                    children: [
+                      Icon(Icons.refresh, size: 20),
+                      SizedBox(width: 8),
+                      Text("Recarregar"),
+                    ],
                   ),
                 ),
               ];
@@ -184,10 +202,10 @@ class _MyHomePageState extends State<MyHomePage> {
             Row(
               children: [
                 _buildStatCard(
-                    context, "Músicas", _viewModel.unfilteredChordsStream),
+                    context, "Músicas", Icons.music_note, _viewModel.unfilteredChordsStream),
                 const SizedBox(width: 12),
                 _buildStatCard(
-                    context, "Na Lista", _viewModel.listChordsStream),
+                    context, "Na Lista", Icons.playlist_play, _viewModel.listChordsStream),
               ],
             ),
             const SizedBox(height: 16.0),
@@ -224,91 +242,108 @@ class _MyHomePageState extends State<MyHomePage> {
 
                     return Expanded(
                       child: ListView.builder(
-                        padding: const EdgeInsets.only(bottom: 48.0),
+                        padding: const EdgeInsets.only(bottom: 80.0),
                         itemCount: chord.length,
                         itemBuilder: (context, index) {
                           return Card(
-                            elevation: 1,
                             margin: const EdgeInsets.only(bottom: 8.0),
                             shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12)),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
                             child: ListTile(
                               leading: Container(
-                                padding: const EdgeInsets.all(8),
+                                width: 40,
+                                height: 40,
                                 decoration: BoxDecoration(
-                                  color: Theme.of(context)
-                                      .colorScheme
-                                      .primaryContainer,
+                                  color: Theme.of(context).colorScheme.primaryContainer,
                                   borderRadius: BorderRadius.circular(8),
                                 ),
-                                child: Icon(Icons.queue_music,
-                                    color: Theme.of(context)
-                                        .colorScheme
-                                        .onPrimaryContainer),
+                                child: Center(
+                                  child: Text(
+                                    chord[index].chordNumber?.toString() ?? "?",
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      color: Theme.of(context).colorScheme.primary,
+                                      fontSize: 14,
+                                    ),
+                                  ),
+                                ),
                               ),
                               title: Text(
-                                "${chord[index].chordNumber?.toString() ?? "Nº"} - ${chord[index].chordName ?? "MÚSICA SEM NOME"}",
+                                chord[index].chordName ?? "MÚSICA SEM NOME",
                                 overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w600,
+                                ),
                               ),
                               subtitle: (chord[index].chordLink ?? "").isEmpty
-                                  ? Container()
-                                  : Align(
-                                      alignment: Alignment.topLeft,
-                                      child: TextButton(
-                                        onPressed: () async {
-                                          final urlString =
-                                              chord[index].chordLink!;
-                                          final uri = Uri.parse(
-                                              urlString.startsWith('http')
-                                                  ? urlString
-                                                  : 'https://$urlString');
-                                          if (await canLaunchUrl(uri)) {
-                                            await launchUrl(uri,
-                                                mode: LaunchMode
-                                                    .externalApplication);
-                                          } else {
-                                            if (context.mounted) {
-                                              showSnackBar(context,
-                                                  content:
-                                                      "Não foi possível abrir o link");
-                                            }
-                                          }
-                                        },
-                                        child: Text(
-                                          chord[index].chordLink!,
-                                          overflow: TextOverflow.ellipsis,
-                                        ),
+                                  ? null
+                                  : Text(
+                                      chord[index].chordLink!,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: Theme.of(context).colorScheme.onSurfaceVariant,
                                       ),
                                     ),
                               trailing: PopupMenuButton(
                                 position: PopupMenuPosition.under,
+                                icon: Icon(
+                                  Icons.more_vert,
+                                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                ),
                                 itemBuilder: (BuildContext context) {
                                   return [
                                     PopupMenuItem(
                                       onTap: () {
                                         _viewModel.addChordList(chord[index]);
                                         showSnackBar(context,
-                                            content:
-                                                "Cifra adicionada na lista");
+                                            content: "Cifra adicionada na lista");
                                       },
-                                      child: const Text("Adicionar na lista"),
+                                      child: const Row(
+                                        children: [
+                                          Icon(Icons.playlist_add, size: 20),
+                                          SizedBox(width: 8),
+                                          Text("Adicionar na lista"),
+                                        ],
+                                      ),
                                     ),
                                     PopupMenuItem(
-                                      onTap: () {
+                                      onTap: () async {
+                                        // O menu já fechou aqui, então usa o context da página
+                                        final pageContext = this.context;
+                                        if (!await ensureAdmin(pageContext) ||
+                                            !pageContext.mounted) {
+                                          return;
+                                        }
                                         instance<ChordViewModel>().chord =
                                             chord[index];
-                                        Navigator.pushNamed(context,
+                                        Navigator.pushNamed(pageContext,
                                             Routes.createOrUpdateChord);
                                       },
-                                      child: const Text("Editar"),
+                                      child: const Row(
+                                        children: [
+                                          Icon(Icons.edit_outlined, size: 20),
+                                          SizedBox(width: 8),
+                                          Text("Editar"),
+                                        ],
+                                      ),
                                     ),
                                     PopupMenuItem(
                                       onTap: () {
                                         Clipboard.setData(ClipboardData(
                                             text: chord[index].chordContent ??
                                                 ""));
+                                        showSnackBar(context,
+                                            content: "Cifra copiada!");
                                       },
-                                      child: const Text("Copiar"),
+                                      child: const Row(
+                                        children: [
+                                          Icon(Icons.copy, size: 20),
+                                          SizedBox(width: 8),
+                                          Text("Copiar"),
+                                        ],
+                                      ),
                                     ),
                                   ];
                                 },
@@ -342,37 +377,13 @@ class _MyHomePageState extends State<MyHomePage> {
         ),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
-      floatingActionButton: Row(
-        spacing: 8.0,
-        mainAxisAlignment: MainAxisAlignment.end,
-        children: [
-          FloatingActionButton.extended(
-            heroTag: "cifra",
-            backgroundColor: Colors.orange.shade700,
-            foregroundColor: Colors.white,
-            onPressed: () => _openCifraClub(context),
-            label: const Row(
-              children: [Text('Cifra Club'), SizedBox(width: 5), Icon(Icons.my_library_music)],
-            ),
-          ),
-          FloatingActionButton(
-            heroTag: "add",
-            onPressed: () =>
-                Navigator.pushNamed(context, Routes.createOrUpdateChord),
-            child: const Icon(Icons.add),
-          ),
-          FloatingActionButton.extended(
-            heroTag: "list",
-            onPressed: () => Navigator.pushNamed(context, Routes.listChords),
-            label: const Row(
-              children: [
-                Text('Lista'),
-                SizedBox(width: 10),
-                Icon(Icons.library_books)
-              ],
-            ),
-          ),
-        ],
+      floatingActionButton: SpeedDialFab(
+        onAddChord: () async {
+          if (!await ensureAdmin(context) || !context.mounted) return;
+          Navigator.pushNamed(context, Routes.createOrUpdateChord);
+        },
+        onCifraClub: () => _openCifraClub(context),
+        onOpenList: () => Navigator.pushNamed(context, Routes.listChords),
       ),
     );
   }

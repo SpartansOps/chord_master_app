@@ -8,8 +8,8 @@ class CifraClubScraper {
     try {
       String requestUrl = url;
       if (kIsWeb) {
-        // allorigins timeouts/fails with CifraClub, codetabs is more reliable for raw HTML bypassing CORS
-        requestUrl = 'https://api.codetabs.com/v1/proxy/?quest=$url';
+        // proxy.cors.sh funciona com Cifra Club
+        requestUrl = 'https://proxy.cors.sh/${Uri.encodeFull(url)}';
       }
       final response = await http.get(Uri.parse(requestUrl));
 
